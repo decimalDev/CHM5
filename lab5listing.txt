@@ -1,0 +1,1354 @@
+Lab V.cpp:
+#include<iostream>
+#include <fstream>
+#include<vector>
+#include<stdio.h>
+#include<cmath>
+#include <iomanip>
+#include <stdlib.h>
+#include "Matrix algebra.h"
+#include "Task I.h"
+#include "Jacobi.h"
+#include "SOR.h"
+#include "CGM.h"
+#include "Matrix algebra.cpp"
+#include "Task I.cpp"
+#include "Jacobi.cpp"
+#include "SOR.cpp"
+#include "CGM.cpp"
+
+#pragma once
+
+int M = 1000; //размерность матриц
+int k = 40; //ширина ленты
+double eps = 0.000001;
+double w = 1.0; //параметр omega для метода SOR
+double q1 = 1.1;
+double q2 = 2.0;
+double q3 = 10.0;
+double m = 10; //число шагов в предобуславливании в PCGM
+
+using namespace std;
+
+int main1()
+{
+	cout.width(14);
+	cout.setf(ios::left);
+	cout.precision(10);
+	cout << endl;
+	srand(time(NULL));
+
+	//Jacobi_as_func_of_q(M, k, eps);
+
+	//SOR_as_func_of_q_w(M, k, eps); //строим график зависимости числа итераций метода SOR от q и w
+
+	//CGM_as_func_of_q(M, k, eps);
+	
+
+	//vector<double> testv = { 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1, 11.1, 12.1, 13.1, 14.1, 15.1, 16.1, 17.1, 18.1, 19.1 }; //проверим работу основных функций на простой матрице
+	//Lent testLent(5, 2, testv);
+
+	//cout << "Test matrix: " << endl;
+	//testLent.print(); //вывод верный
+	//cout << endl;
+	//Lent testLentT = (testLent.T());
+	///cout << "Testing transpose operation: " << endl;
+	//testLentT.print(); //вывод верный
+	//cout << endl;
+
+	//Lent testP = testLentT * testLent;
+	//cout << "Testing A^T * A product: " << endl;
+	//testP.print(); //вывод верный
+	//cout << endl;
+
+	//cout << "Testing RowSum:" << endl;
+	//vector<double> testRS = testP.RowSum();
+	//for (double x : testRS) cout << x << " "; //вывод верный
+	//cout << endl;
+	// 
+	//task1
+	cout << "task1"<<endl;
+	Vector X(M); //генерируем вектор X
+	cout << "\tX: " << endl;
+	for (int i = 1; i <= M; i++)
+	{
+		int num = -1000 + rand() % (2000 + 1);
+		double a = (double)num / 1000.0;
+		X.setelement(i, a);
+		//cout << X.getelement(i) << " ";
+	}
+	cout << endl;
+
+	//генерируем матрицы A1, A2, A3 и вектор B
+	vector<Lent> A;
+	vector<double> Q = { q1, q2, q3 };
+	vector<Vector> B = Generate_Lents(A, X, Q, M, k); //три базовые матрицы
+
+	//task2
+	cout << "task2"<<endl;
+	//МЕТОД ЯКОБИ
+	Vector X0(M); //в качестве начального приближения используем нулевой вектор
+	vector<Vector> XJacobi; //вектор решений
+	cout << endl;
+	for (int i = 0; i < 3; i++)
+	{
+		double quando;
+		XJacobi.push_back(Jacobi(A[i], B[i], X0, quando, eps));
+		cout << "X_{Jacobi}(" << i + 1 << "): " << endl;
+		//for (int j = 1; j <= M; j++)
+		//{
+		//	cout << XJacobi[i].getelement(j) << " ";
+		//}
+		if ((X - XJacobi[i]).norm() < eps) cout << "OK"; //проверяем точность
+		else cout << "!" << setw(7) << setprecision(4) << (X - XJacobi[i]).norm();
+		cout << endl;
+	}
+	cout << endl;
+
+	cout << "task3" << endl;
+	//task3
+	//SOR
+	double quando;
+	vector<Vector> XSOR; //вектор решений
+	for (int i = 0; i < 3; i++)
+	{
+		XSOR.push_back(SOR(A[i], B[i], X0, eps, quando, w));
+		cout << "X_{SOR}(" << i + 1 << "): " << endl;
+		/*for (int j = 1; j <= M; j++)
+		{
+			cout << XSOR[i].getelement(j) << " ";
+		}*/
+		if ((X - XSOR[i]).norm() < eps) cout << "OK"; //проверяем точность
+		else cout << "!" << setw(7) << setprecision(4) << (X - XSOR[i]).norm();
+		cout << endl;
+	}
+	cout << endl;
+
+	cout << "task4" << endl;
+	//task4
+	//CGM
+
+	//vector<double> testCGM = { 4.0, 3.0, 1.0, 1.0 }; //тестируем CGM на примере из Википедии
+	//Lent AtestCGM(2, 1, testCGM);
+	//vector<double> ytestCGM = { 1.0, 2.0 };
+	//Vector YtestCGM(ytestCGM);
+	//vector<double> x0testCGM = { 2.0, 1.0 };
+	//Vector X0testCGM(x0testCGM);
+	//Vector XtestCGM = CGM(AtestCGM, YtestCGM, X0testCGM, 0.0001);
+	//cout << "\t XtestCGM: " << endl; //работает!
+	//cout << XtestCGM.getelement(1) << " " << XtestCGM.getelement(2) << endl;
+
+	vector<Vector> XCGM; //вектор решений
+	for (int i = 0; i < 3; i++)
+	{
+		XCGM.push_back(CGM(A[i], B[i], X0, quando, eps));
+		cout << "X_{CGM}(" << i + 1 << "): " << endl;
+		//for (int j = 1; j <= M; j++)
+		//{
+		//	cout << XCGM[i].getelement(j) << " ";
+		//}
+		if ((X - XCGM[i]).norm() < eps) cout << "OK"; //проверяем точность
+		else cout << "!" << setw(7) << setprecision(4) << (X - XCGM[i]).norm();
+		cout << endl;
+	}
+	cout << endl;
+
+	vector<Vector> XPCGM; //вектор решений
+	for (int i = 0; i < 3; i++)
+	{
+		XPCGM.push_back(PCGM(A[i], B[i], X0, eps, m, false));
+		cout << "X_{PCGM}(" << i + 1 << "): " << endl;
+		//for (int j = 1; j <= M; j++)
+		//{
+		//	cout << XPCGM[i].getelement(j) << " ";
+		//}
+		if ((X - XPCGM[i]).norm() < eps) cout << "OK"; //проверяем точность
+		else cout << "!" << setw(7) << setprecision(4) << (X - XPCGM[i]).norm();
+		cout << endl;
+	}
+
+	//варьируем число шагов в методе PCGM и смотрим, как меняется число итераций
+	//for (int mu = 1; mu <= 30; mu++)
+	//{
+	//	PCGM(A[0], B[0], X0, eps, mu, true);
+	//}
+
+	return 0;
+}
+
+
+
+
+
+Jacobi.h:
+#include<iostream>
+#include <fstream>
+#include<vector>
+#include<stdio.h>
+#include<cmath>
+#include <iomanip>
+#include <stdlib.h>
+#include "Matrix algebra.h"
+#include "Task I.h"
+
+#pragma once
+
+using namespace std;
+
+Vector Jacobi(Lent& A, Vector& B, Vector& X, double& quando, double eps);
+
+Vector mJacobi(Lent& A, Vector& B, Vector& X0, int m);
+
+void Jacobi_as_func_of_q(int N, int l, double eps);
+
+
+Jacobi.cpp:
+#include "Jacobi.h"
+
+Vector Jacobi(Lent& A, Vector& B, Vector& X0, double& quando, double eps)
+{
+	int N = X0.getrows();
+	int l = A.get_l();
+
+	Vector X = X0;
+	Vector Xnew(N);
+	Vector Buf(N);
+	Vector r(N);
+	int iterationes = 0;
+	do
+	{
+		for (int i = 1; i <= N; i++)
+		{
+			double x = 0;
+			int left = max(1, i - l);
+			int right = min(i + l, N);
+			int j = left;
+			while(j < i)
+			{
+				x += A.get_element(i, j) * X.getelement(j);
+				j++;
+			}
+			j = i + 1;
+			while (j <= min(i + l, N))
+			{
+				x += A.get_element(i, j) * X.getelement(j);
+				j++;
+			}
+			x = (B.getelement(i) - x) / A.get_element(i, i);
+			Xnew.setelement(i, x);
+		}
+		Buf = X;
+		X = Xnew;
+		r = A.Prod(X) - B;
+		iterationes++;
+	}
+	while (r.norm() >= eps);
+	quando = iterationes;
+	return X;
+}
+
+Vector mJacobi(Lent& A, Vector& B, Vector& X0, int m)
+{
+	int N = X0.getrows();
+	int l = A.get_l();
+
+	Vector X = X0;
+	Vector Xnew(N);
+	int p = 0;
+	do
+	{
+		for (int i = 1; i <= N; i++)
+		{
+			double x = 0;
+			int left = max(1, i - l);
+			int right = min(i + l, N);
+			int j = left;
+			while (j < i)
+			{
+				x += A.get_element(i, j) * X.getelement(j);
+				j++;
+			}
+			j = i + 1;
+			while (j <= min(i + l, N))
+			{
+				x += A.get_element(i, j) * X.getelement(j);
+				j++;
+			}
+			x = (B.getelement(i) - x) / A.get_element(i, i);
+			Xnew.setelement(i, x);
+		}
+		X = Xnew;
+		p++;
+	} while (p <= m);
+	return X;
+}
+
+void Jacobi_as_func_of_q(int N, int l, double eps)
+{
+	cout << "Jacobi as func of q" << endl;
+	//варьируем Q и w
+	double quando;
+
+	fstream fout;
+	string FileName = "D://Jacobi(q).txt";
+	fout.open(FileName, ios::out);
+
+	Vector X(N); //генерируем вектор X
+	cout << "\tX: " << endl;
+	for (int i = 1; i <= N; i++)
+	{
+		int num = -1000 + rand() % (2000 + 1);
+		double a = (double)num / 1000.0;
+		X.setelement(i, a);
+	}
+	cout << endl;
+
+	Vector X0(N); //начальное приближение -- нулевой вектор
+
+	//генерируем A, Q и B
+	vector<Lent> A;
+	vector<double> Q;
+	double i = 1.5;
+	while (i < 10)
+	{
+		Q.push_back(i);
+		i += 0.5;
+	}
+	vector<Vector> B = Generate_Lents(A, X, Q, N, l); //матрицы
+	for (int q = 0; q < Q.size(); q++)
+	{
+			Jacobi(A[q], B[q], X0, quando, eps);
+			fout << Q[q] << "\t" << quando << endl;
+			cout << Q[q] << "\t" << quando << endl;
+
+	}
+	fout.close();
+}
+
+
+
+
+
+Matrix algebra.h:
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#pragma once
+
+class Vector;
+
+// класс ћј“–»÷ј характеризуетс¤ трем¤ пол¤ми: числом строк (rows), числом столбцов (columns) и двумерным массивом элементов (content)
+class Matrix
+{
+protected:
+	int rows;
+	int columns;
+	vector<vector<double>> content;
+
+public:
+	int getrows();
+
+	int getcolumns();
+
+	void setcontent(int m, int n); // по дефолту content -- нулева¤ матрица соответствующего размера
+
+	//метод, позвол¤ющий заполнить выбранную ¤чейку нужным числом
+	void setelement(int i, int j, double a);
+
+	//метод, извлекающий значение из нужной ¤чейки
+	double getelement(int i, int j);
+
+	//метод, осуществл¤ющий перестановку строк
+	void permutation(int i, int j);
+
+	//метод, осуществл¤ющий умножение стоки на скал¤р
+	void scalar(int i, double a);
+
+	//метод, вычитающий помноженную на a j-ю строку из i-ой
+	void substract(int i, int j, double a);
+
+	//транспонирование
+	Matrix T();
+
+	//дефолтный конструктор строит матрицу 3x3
+	Matrix();
+
+	Matrix(int m, int n);
+
+	Matrix(int m, int n, double k); //строит матрицу m x n с константой k на главной диагонали
+
+	Matrix(vector<vector<double>>& C);
+
+	void print();
+
+	friend Matrix operator* (const Matrix& A, const Matrix& B);
+
+	friend Vector operator* (const Matrix& A, const Vector& X);
+
+};
+
+class Vector : public Matrix
+{
+public:
+	void setelement(int i, double a);
+
+	double getelement(int i);
+
+	double norm();
+
+	Vector();
+
+	Vector(int m);
+	Vector(const Vector& copia);
+
+	Vector(vector<double>& C);
+
+	//friend Vector operator* (const RotationMatrix& A, const Vector& X);
+
+	Vector& operator= (const Vector& v);
+
+	friend Vector operator* (const Matrix& A, const Vector& X);
+	friend Vector operator- (const Vector& X, const Vector& Y);
+	friend double operator* (const Vector& X, const Vector& Y);
+	friend Vector operator* (const double& a, const Vector& X);
+	friend Vector operator+ (const Vector& X, const Vector& Y);
+
+};
+
+
+
+
+
+Matrix algebra.cpp:
+#include "Matrix algebra.h"
+
+// класс ћј“–»÷ј характеризуетс¤ трем¤ пол¤ми: числом строк (rows), числом столбцов (columns) и двумерным массивом элементов (content)
+
+int Matrix::getrows()
+{
+	return rows;
+}
+
+int Matrix::getcolumns()
+{
+	return columns;
+}
+
+void Matrix::setcontent(int m, int n) // по дефолту content -- нулева¤ матрица соответствующего размера
+{
+	rows = m;
+	columns = n;
+	vector<vector<double>> Theta;
+	Theta.resize(m);
+	for (int i = 0; i < m; i++)
+	{
+		Theta[i].resize(n);
+		fill(Theta[i].begin(), Theta[i].end(), 0.0);
+	}
+	content = Theta;
+}
+
+//метод, позвол¤ющий заполнить выбранную ¤чейку нужным числом
+void Matrix::setelement(int i, int j, double a)
+{
+	if (i < 1 || j < 1 || i > rows || j > columns)
+	{
+		throw "\n INCORRECT INPUT FOR MATRIX CELL. \n";
+	}
+	else
+	{
+		content[i-1][j-1] = a;
+	}
+}
+
+//метод, извлекающий значение из нужной ¤чейки
+double Matrix::getelement(int i, int j)
+{
+	if (i < 1 || j < 1 || i > rows || j > columns)
+	{
+		throw "\n INCORRECT INPUT FOR MATRIX CELL. \n";
+	}
+	else
+	{
+		return content[i-1][j-1];
+	}
+}
+
+//дефолтный конструктор строит матрицу 3x3
+Matrix::Matrix()
+{
+	rows = 3;
+	columns = 3;
+	setcontent(3,3);
+}
+	
+//конструктор, стро¤щий нулевую матрицу m x n
+Matrix::Matrix(int m, int n)
+{
+	rows = m;
+	columns = n;
+	setcontent(m, n);
+}
+
+Matrix::Matrix(int m, int n, double k)
+{
+	rows = m;
+	columns = n;
+	vector<vector<double>> E;
+	E.resize(m);
+	for (int i = 0; i < m; i++)
+	{
+		E[i].resize(n);
+		fill(E[i].begin(), E[i].end(), 0.0);
+		if (i < n)
+		{
+			E[i][i] = k;
+		}
+	}
+	content = E;
+}
+
+//конструктор, стро¤щий матрицу m x n и заполн¤ющий еЄ элементами данного массива C
+Matrix::Matrix(vector<vector<double>>& C)
+{
+	int m = C.size();
+	int n = C[0].size();
+	setcontent(m, n);
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			content[i][j] = C[i][j];
+		}
+	}
+	cout << "Matrix created!" << endl;
+}
+
+//ѕоложить элемент в вектор
+void Vector::setelement(int i, double a)
+{
+	if (i < 1 || i > rows)
+	{
+		throw "\n INCORRECT INPUT FOR MATRIX CELL. \n";
+	}
+	else
+	{
+		content[i-1][0] = a;
+	}
+}
+
+//получить элемент вектора
+double Vector::getelement(int i)
+{
+	if (i < 1 || i > rows)
+	{
+		throw "\n INCORRECT INPUT FOR MATRIX CELL. \n";
+	}
+	else
+	{
+		return content[i-1][0];
+	}
+}
+
+double Vector::norm()
+{
+	double s = 0;
+	for (int i = 0; i < rows; i++)
+	{
+		s += content[i][0] * content[i][0];
+	}
+	return sqrt(s);
+}
+
+//дефолтный конструктор вектора -- нулева¤ матрица 3 x 1
+Vector::Vector()
+{
+	rows = 3;
+	columns = 1;
+	setcontent(3, 1);
+}
+
+//нулевой вектор на m строках
+Vector::Vector(int m)
+{
+	rows = m;
+	columns = 1;
+	setcontent(m, 1);
+}
+
+Vector::Vector(const Vector& copia)
+{
+	rows = copia.rows;
+	content = copia.content;
+}
+
+//вектор размера m, заполненный элементами массива C
+Vector::Vector(vector<double>& C)
+{
+	int m = C.size();
+	columns = 1;
+	setcontent(m,1);
+	for (int i = 0; i < m; i++)
+	{
+		content.at(i).at(0) = C.at(i);
+	}
+}
+
+//оператор присваивани¤ дл¤ векторов
+Vector& Vector::operator= (const Vector& v)
+{
+	if (rows != v.rows)
+	{
+		throw "Error.";
+	}
+	for (int i = 0; i < v.rows; i++)
+	{
+		content[i].at(0) = v.content[i].at(0);
+	}
+	return *this;
+}
+
+void Matrix::permutation(int i, int j)
+{
+	if (i < 1 || i > rows || j  < 1 || j > rows)
+	{
+		throw "\n INCORRECT INPUT FOR MATRIX CELL. \n";
+	}
+	else
+	{
+		vector <double> buf = content[i - 1];
+		content[i - 1] = content[j - 1];
+		content[j - 1] = buf;
+	}
+}
+
+void Matrix::scalar(int i, double a)
+{
+	if (i < 1 || i > rows)
+	{
+		throw "\n INCORRECT INPUT FOR MATRIX CELL. \n";
+	}
+	else
+	{
+		for (int j = 1; j <= columns; j++) content[i - 1][j - 1] = content[i - 1][j - 1] * a;
+	}
+}
+
+void Matrix::substract(int i, int j, double a)
+{
+	if (i < 1 || i > rows || j < 1 || j > rows)
+	{
+		throw "\n INCORRECT INPUT FOR MATRIX CELL. \n";
+	}
+	else
+	{
+		for (int k = 1; k <= columns; k++)
+			content[i - 1][k - 1] = content[i - 1][k - 1] - a * content[j - 1][k - 1];
+	}
+}
+
+void Matrix::print()
+{
+	for (int i = 1; i <= rows; i++)
+	{
+		for (int j = 1; j < columns; j++) cout << this->getelement(i, j) << " ";
+		cout << this->getelement(i, columns) << endl;
+	}
+}
+
+Matrix operator* (const Matrix& A, const Matrix& B)
+{
+	if (A.columns != B.rows)
+	{
+		throw "\n GIVEN MATRICES ARE NOT MULTIPLIABLE.\n";
+	}
+	int m = A.rows;
+	int n = A.columns;
+	int p = B.columns;
+	Matrix C(m, p);
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < p; j++)
+		{
+			float z = 0;
+			for (int k = 0; k < n; k++)
+			{
+				float x = A.content[i][k];
+				float y = B.content[k][j];
+				z += (x * y);
+			}
+			C.content[i][j] = z;
+		}
+	}
+	return C;
+}
+
+Vector operator* (const Matrix& A, const Vector& X)
+{
+	if (A.columns != X.rows)
+	{
+		throw "\n GIVEN MATRICES ARE NOT MULTIPLIABLE.\n";
+	}
+	int m = A.rows;
+	int n = A.columns;
+	Vector Y(m);
+	for (int i = 0; i < m; i++)
+	{
+		float b = 0;
+		for (int k = 0; k < n; k++)
+		{
+			float a = A.content[i][k];
+			float x = X.content[k][0];
+			b += (a * x);
+		}
+		Y.content[i][0] = b;
+	}
+	return Y;
+}
+
+Vector operator-(const Vector& X, const Vector& Y0)
+{
+	Vector New = X;
+	int N = New.getrows();
+	Vector Y = Y0;
+	for (int i = 0; i < N; i++)
+	{
+		New.content[i][0] = New.content[i][0] - Y.content[i][0];
+	}
+	return New;
+}
+
+double operator* (const Vector& X, const Vector& Y)
+{
+	double s = 0;
+	for (int i = 0; i < X.rows; i++)
+	{
+		s += X.content[i][0] * Y.content[i][0];
+	}
+	return s;
+}
+
+Vector operator* (const double& a, const Vector& X)
+{
+	Vector Y(X.rows);
+	for (int i = 0; i < X.rows; i++)
+	{
+		Y.content[i][0] = a * X.content[i][0];
+	}
+	return Y;
+}
+
+Vector operator+(const Vector& X, const Vector& Y0)
+{
+	Vector New = X;
+	int N = New.getrows();
+	Vector Y = Y0;
+	for (int i = 0; i < N; i++)
+	{
+		New.content[i][0] += Y.content[i][0];
+	}
+	return New;
+}
+
+Matrix Matrix::T()
+{
+	Matrix T(columns, rows);
+	for (int i = 1; i <= rows; i++)
+	{
+		for (int j = 1; j <= columns; j++)
+		{
+			T.setelement(j, i, this->content[i - 1][j - 1]);
+		}
+	}
+	return T;
+}
+
+
+
+SOR.h:
+#include<iostream>
+#include<fstream>
+#include<vector>
+#include<stdio.h>
+#include<cmath>
+#include <iomanip>
+#include <stdlib.h>
+#include "Matrix algebra.h"
+#include "Task I.h"
+
+#pragma once
+
+using namespace std;
+
+Vector SOR(Lent& A, Vector& B, Vector& X0, double eps, double& quando, double omega);
+
+void SOR_as_func_of_q_w(int N, int l, double eps);
+
+
+
+SOR.cpp:
+#include "SOR.h"
+
+Vector SOR(Lent& A, Vector& B, Vector& X0, double eps, double& quando, double w)
+{
+	int N = A.get_N();
+	int l = A.get_l();
+	Vector X = X0;
+	Vector Xnew(N);
+	Vector Buf(N);
+	Vector r(N);
+	int iterationes = 0;
+	do
+	{
+		for (int i = 1; i <= N; i++)
+		{
+			double x = 0;
+			int left = max(1, i - l);
+			int right = min(i + l, N);
+			int j = left;
+			while (j < i)
+			{
+				x += A.get_element(i, j) * Xnew.getelement(j);
+				j++;
+			}
+			j = i + 1;
+			while (j <= min(i + l, N))
+			{
+				x += A.get_element(i, j) * X.getelement(j);
+				j++;
+			}
+			x = (B.getelement(i) - x) * w / A.get_element(i, i);
+			x += (1 - w) * X.getelement(i);
+			Xnew.setelement(i, x);
+		}
+		Buf = X;
+		X = Xnew;
+		r = A.Prod(X) - B;
+		iterationes++;
+	}
+	while (r.norm() >= eps);
+	quando = iterationes;
+	return X;
+}
+
+void SOR_as_func_of_q_w(int N, int l, double eps)
+{
+	cout << "SOR as func of (q,w)" << endl;
+	//варьируем Q и w
+	double quando;
+
+	fstream fout;
+	string FileName = "D://SOR(q,w).txt";
+	fout.open(FileName, ios::out);
+
+	Vector X(N); //генерируем вектор X
+	cout << "\tX: " << endl;
+	for (int i = 1; i <= N; i++)
+	{
+		int num = -1000 + rand() % (2000 + 1);
+		double a = (double)num / 1000.0;
+		X.setelement(i, a);
+	}
+	cout << endl;
+
+	Vector X0(N); //начальное приближение -- нулевой вектор
+
+	//генерируем A, Q и B
+	vector<Lent> A;
+	vector<double> Q;
+	double i = 1.5;
+	while (i < 10)
+	{
+		Q.push_back(i);
+		i += 0.5;
+	}
+	vector<Vector> B = Generate_Lents(A, X, Q, N, l); //матрицы
+	for (int q = 0; q < Q.size(); q++)
+	{
+		double o = 0.2;
+		while (o < 2)
+		{
+			cout << Q[q] << "\t" << o << endl;
+			SOR(A[q], B[q], X0, eps, quando, o);
+			fout << Q[q] << "\t" << o << "\t" << quando << endl;
+			o += 0.1;
+		}
+	}
+	fout.close();
+}
+
+
+
+
+
+Task I.h:
+#include<iostream>
+#include <fstream>
+#include<vector>
+#include<stdio.h>
+#include<cmath>
+#include <iomanip>
+#include <stdlib.h>
+#include "Matrix algebra.h"
+
+#pragma once
+
+using namespace std;
+
+vector<double> NonDiagonal(int N, int l);
+
+int index(int i, int j, int N, int l); //по номеру элемента в исходной матрицы вычисляем его позицию в векторе L
+							 //кладём элементы в ленту в следующем порядке : главная диагональ: i - j = 0 --> диагональ, находящаяся непосредственно под главной: i - j = 1 --> диагональ, находящаяся непосредственно над главной: i - j = -1 --> диагональ i - j = 2 -->диагональ i - j = -2 --> диагональ i - j = 3 и т.д.; элементы внутри диагонали -- сверху вниз
+							 //это позволяет вывести простую формулу для позиции первого элемента выбранной диагонали в векторе: для главной диагонали эта позиция есть 0; для первой диагонали снизу эта позиция есть число элементов главной диагонали, т.е. N; для первой диагонали сверху это N + (N - 1); для второй диагонали снизу это N + 2 * (N - 1); для второй диагонали сверху это N + 2 * (N - 1) + (N - 2) и т.д.
+							 //т.о., позиция P(d) первого элемента d-ой диагонали (d = i - j) определяется формулой
+							 //P(d) = N + 2*(N - 1) + 2*(N - 2) + ... + 2*(N - |d| + 1), если d > 0
+							 //P(d) = N + 2*(N - 1) + 2*(N - 2) + ... + 2*(N - |d| + 1) + (N - |d|), если d < 0
+							 //Чтобы избавиться от циклов, применим формулы суммы членов арифметической прогрессии
+							 //P(d) соответствует позиции, которую в векторе займёт первый элемент диагонали d. Чтобы определить позицию следующих элементов диагонали, заметим, что при d < 0 первый элемент диагонали находится в |d|-ом столбце, а при d > 0 -- в |d|-ой строке. Поэтому при определении номера элемента в векторе делаем сдвиг: на (j - |d| - 1) в первом случае и на (i - |d| - 1) во втором
+
+class Lent //класс для ленточных матриц
+{
+private: 
+	int N; //порядок 
+	int l; //ширина ленты
+	vector<double> L; //собственно элементы матрицы
+public:
+	double norm(); //максимум по модулям недиагональных элементов -- нужно для условия выхода в алгоритме Якоби
+	Lent(int N, int l);
+	Lent(int N, int l, vector<double>& L); //создаём матрицу, если элементы ленты уже определены
+	int get_N();
+	int get_l();
+	double get_element(int i, int j);
+	vector<double> RowSum(); //п. (1.2)
+	void print(); //вывод на консоль
+	Vector Prod(Vector& X); //вектор, получающийся при умножении матрицы на вектор
+	Lent(const Lent& copia);
+	Lent& operator=(const Lent& C);
+	Lent T(); //транспонирование
+	friend Lent operator*(const Lent& A, const Lent& B);
+	bool IfDiagDom();
+};
+
+Lent operator*(const Lent& A, const Lent& B);
+
+vector<Vector> Generate_Lents(vector<Lent>& A, Vector& X, vector<double> Q, int N, int l);
+
+
+
+
+
+Task I.cpp:
+#include "Task I.h"
+
+vector<double> NonDiagonal(int N, int l)
+{
+	vector<double> A;
+	int card = N * (2 * l + 1) - l * (l + 1); //общее число элементов ленты
+	A.resize(card);
+	for (int i = N; i < card; i++)
+	{
+		int num = -1000 + rand() % (2000 + 1);
+		double a = (double)num / 1000.0;
+		A[i] = a;
+	}
+	return A;
+}
+
+int index(int i, int j, int N, int l)
+{
+	int d = i - j;
+	int D = abs(d);
+	int index;
+	if (d == 0)
+	{
+		index = i - 1;
+	}
+	if (d < 0)
+	{
+		index = D * (2 * N - D) + j - D - 1;
+	}
+	if (d > 0)
+	{
+		index = N + (D - 1) * (2 * N - D) + i - D - 1;
+	}
+	return index;
+}
+
+double Lent::norm()
+{
+	double n = 0;
+	for (int i = N; i < L.size(); i++)
+	{
+		if (abs(L[i]) > n) n = abs(L[i]);
+	}
+	return n;
+}
+
+bool Lent::IfDiagDom()
+{
+	vector<double> S = this->RowSum();
+	for (int i = 0; i < N; i++)
+	{
+		if (L[i] <= S[i]) return false;
+	}
+	return true;
+}
+
+Lent::Lent(int N, int l)
+{
+	vector<double> A;
+	double card = N * (2 * l + 1) - l * (l + 1); //общее число элементов ленты
+	A.resize(card, 0.0);
+	this->N = N;
+	this->l = l;
+	this->L = A;
+}
+
+Lent::Lent(int N, int l, vector<double>& L)
+{
+	this->N = N;
+	this->l = l;
+	this->L = L;
+}
+
+int Lent::get_N()
+{
+	return N;
+}
+
+int Lent::get_l()
+{
+	return l;
+}
+
+double Lent::get_element(int i, int j)
+{
+	return L[index(i, j, N, l)];
+}
+
+vector<double> Lent::RowSum()
+{
+	vector<double> S;
+	for (int row = 1; row <= N; row++)
+	{
+		double s = 0;
+		int left = max(1, row - l);
+		int column = left;
+		while(column < row)
+		{
+			s += abs(L[index(row, column, N, l)]);
+			column++;
+		}
+		int right = min(N, row + l);
+		column = row + 1;
+		while(column <= right)
+		{
+			s += abs(L[index(row, column, N, l)]);
+			column++;
+		}
+		S.push_back(s);
+	}
+	return S;
+}
+
+void Lent::print()
+{
+	for (int i = 1; i <= N; i++)
+	{
+		int left = max(1, i - l);
+		int j = 1;
+		while (j < left)
+		{
+			cout << "0.000 ";
+			j++;
+		}
+		while (j <= i)
+		{
+			cout << L[index(i, j, N, l)] << " ";
+			j++;
+		}
+		int right = min(N, i + l);
+		while(j <= right)
+		{
+			cout << L[index(i, j, N, l)] << " ";
+			j++;
+		}
+		while (j <= N)
+		{
+			cout << "0.000 ";
+			j++;
+		}
+		cout << endl;
+	}
+}
+
+Vector Lent::Prod(Vector& X)
+{
+	Vector Y(N);
+	for (int i = 1; i <= N; i++)
+	{
+		double s = 0;
+		int left = max(1, i - l);
+		int right = min(N, i + l);
+		for (int j = left; j <= right; j++) { s += L[index(i, j, N, l)] * X.getelement(j); }
+		Y.setelement(i, s);
+	}
+	return Y;
+}
+
+Lent::Lent(const Lent& copia)
+{
+	N = copia.N;
+	l = copia.l;
+	L = copia.L;
+}
+
+Lent& Lent::operator=(const Lent& copia)
+{
+	N = copia.N;
+	l = copia.l;
+	L = copia.L;
+	return *this;
+}
+
+Lent Lent::T()
+{
+	Lent A(N, l);
+	for (int i = 1; i <= N; i++)
+	{
+		int left = max(1, i - l);
+		int right = min(N, i + l);
+		int j = left;
+		while (j <= right)
+		{
+			A.L[index(j, i, N, l)] = this->L[index(i, j, N, l)];
+			j++;
+		}
+	}
+	return A;
+}
+
+Lent operator*(const Lent& A, const Lent& B)
+{
+	int N = A.N;
+	int l = A.l;
+	Lent P(N, 2*l);
+	for (int i = 1; i <= N; i++)
+	{
+		int left_i = max(1, i - l);
+		int right_i = min(N, i + l);
+		for (int j = max(1, i - 2*l); j <= min(N, 2*l + i); j++)
+		{
+				int left_j = max(1, j - l);
+				int right_j = min(N, j + l);
+				int left = max(left_i, left_j);
+				int right = min(right_i, right_j);
+				int k = left;
+				double s = 0;
+				while (k <= right)
+				{
+					s += A.L[index(i, k, N, l)] * B.L[index(k, j, N, l)];
+					k++;
+				}
+				P.L[index(i, j, N, l)] = s;
+		}
+	}
+	return P;
+}
+
+
+vector<Vector> Generate_Lents(vector<Lent>& A, Vector& X, vector<double> Q, int N, int l) //генерируем Q.size() штук l-диагональных положительно определённых симметричных квадратных матриц порядка N
+{
+	A = {};
+	int card = Q.size();
+	vector<double> v = NonDiagonal(N, l);  //недиагональные элементы ленты
+	cout << endl;
+	Lent U(N, l, v); //строим исходную матрицу
+	vector<double> S = U.RowSum(); //считаем суммы модулей недиагональных элементов в каждой строке
+	vector<vector<double>> vv;
+	for (int i = 0; i < card; i++)
+	{
+		vv.push_back(v);
+	}
+	vector<Lent> A0; //A0 -- исходные ленточные матрицы, A -- после приведения к оптимальному виду
+	vector<Vector> B0; //исходный вектор значений и вектор значений после домножения на A^T
+	vector<Vector> B;
+	for (int i = 0; i < card; i++)
+	{
+		for (int j = 0; j < N; j++)
+		{
+			vv[i][j] = Q[i] * S[j]; //диагональные элементы
+		}
+		Lent Aa(N, l, vv[i]); //матрица A_i из заданий
+		A0.push_back(Aa);
+		cout << "\tA(" << i + 1 << "): " << endl;
+		//A0[i].print();  //сходится: недиагональные элементы матриц A1-A3 совпадают, диагональные пропорциональны с требуемой пропорциональностью
+		Vector b = A0[i].Prod(X); //вектор значений получаем как произведение Ax
+		B0.push_back(b);
+		cout << "\tB(" << i + 1 << "): " << endl;
+		// (int i = 1; i <= M; i++) cout << b.getelement(i) << " ";
+		cout << endl;
+		Lent At(N, l); //транспонированные матрицы
+		At = A0[i].T();
+		Lent a(N, 2 * l); //матрица A^T * A
+		a = At * A0[i];
+		A.push_back(a);
+		cout << "\tA*(" << i + 1 << "): " << endl;
+		//A[i].print();
+		if (A[i].IfDiagDom() == false) cout << "NOT DIAGONALLY DOMINANT!" << endl; //проверяем диагональное преобладание -- во многих случаях нарушается
+		B.push_back(At.Prod(B0[i])); //умножаем исходное B на A^T
+		//cout << "\tB*(" << i + 1 << "): " << endl;
+		//for (int j = 1; j <= M; j++) cout << B[i].getelement(j) << " ";
+		cout << endl;
+		cout << endl;
+	}
+	return B;
+}
+
+
+
+
+
+CGM.h:
+#include<iostream>
+#include <fstream>
+#include<vector>
+#include<stdio.h>
+#include<cmath>
+#include <iomanip>
+#include <stdlib.h>
+#include "Matrix algebra.h"
+#include "Task I.h"
+#include "Jacobi.h"
+
+#pragma once
+
+using namespace std;
+
+#pragma once
+
+Vector CGM(Lent& A, Vector& B, Vector& X0, double& quando, double eps);
+
+Vector PCGM(Lent& A, Vector& B, Vector& X0, double eps, int m, bool flag);
+
+void CGM_as_func_of_q(int N, int l, double eps);
+
+
+
+
+
+
+
+
+CGM.cpp:
+#include "CGM.h"
+
+Vector CGM(Lent& A, Vector& B, Vector& X0, double& quando, double eps)
+{
+	int N = A.get_N();
+	Vector R = B - A.Prod(X0);
+	Vector P = R;
+	Vector X = X0;
+	double a, b, rr;
+	Vector Ap(N);
+	Vector Buf(N);
+	int iterationes = 0;
+	do
+	{
+		Ap = A.Prod(P);
+		rr = R * R;
+		a = rr / (P * Ap);
+		X = X + a * P;
+		R = R - a * Ap;
+		b = R * R / rr;
+		P = R + b * P;
+		iterationes++;
+	}
+	while (R.norm() >= eps);
+	quando = iterationes;
+	return X;
+}
+
+Vector PCGM(Lent& A, Vector& B, Vector& X0, double eps, int m, bool flag)
+{
+	int N = A.get_N();
+	Vector R = B - A.Prod(X0);
+	Vector S = mJacobi(A, R, X0, m);
+	Vector P = S;
+	Vector X = X0;
+	double a, b, rs;
+	Vector Ap(N);
+	Vector Buf(N);
+	int iterationes = 0;
+	do
+	{
+		Ap = A.Prod(P);
+		rs = R * S;
+		a = rs / (P * Ap);
+		X = X + a * P;
+		R = R - a * Ap;
+		S = mJacobi(A, R, X0, m);
+		b = R * S / rs;
+		P = S + b * P;
+		iterationes++;
+	} while (R.norm() >= eps);
+	if(flag == false) cout << "PCGM with m = " << m << " requires " << iterationes << " iteration(s)." << endl;
+	else
+	{
+		fstream fout;
+		string FileName = "D://PCGM(m).txt";
+		fout.open(FileName, ios::app);
+		fout << endl << "___________________" << endl << m << "\t" << iterationes << endl;
+		fout.close();
+	}
+	return X;
+}
+
+void CGM_as_func_of_q(int N, int l, double eps)
+{
+	cout << "CGM as func of (q,w)" << endl;
+	//варьируем Q и w
+	double quando;
+
+	fstream fout;
+	string FileName = "D://CGM(q).txt";
+	fout.open(FileName, ios::out);
+
+	Vector X(N); //генерируем вектор X
+	cout << "\tX: " << endl;
+	for (int i = 1; i <= N; i++)
+	{
+		int num = -1000 + rand() % (2000 + 1);
+		double a = (double)num / 1000.0;
+		X.setelement(i, a);
+	}
+	cout << endl;
+
+	Vector X0(N); //начальное приближение -- нулевой вектор
+
+	//генерируем A, Q и B
+	vector<Lent> A;
+	vector<double> Q;
+	double i = 1.5;
+	while (i < 10)
+	{
+		Q.push_back(i);
+		i += 0.5;
+	}
+	vector<Vector> B = Generate_Lents(A, X, Q, N, l); //матрицы
+	for (int q = 0; q < Q.size(); q++)
+	{
+		CGM(A[q], B[q], X0, quando, eps);
+		fout << Q[q] << "\t" << quando << endl;
+		cout << Q[q] << "\t" << quando << endl;
+
+	}
+	fout.close();
+}
+
